@@ -1,26 +1,49 @@
 package main
 
-import "fmt"
+import (
+    "fmt"
+    "math"
+)
 
-func calculateFibonacci(n int) {
-	var x int
-	y := 1
-	for i := 0; i < n; i++ {
-		x, y = y, x+y
-		fmt.Println(x)
-	}
+type geometry interface {
+    area() float64
+    perim() float64
 }
 
-func calculateFactorials(n int) {
-	accumulator := 1
-	fmt.Println(accumulator)
-	for i := 1; i < n; i++ {
-		accumulator *= i
-		fmt.Println(accumulator)
-	}
+type rectangle struct {
+    width, height float64
+}
+
+type circle struct {
+    radius float64
+}
+
+func (r rectangle) area() float64 {
+    return r.width * r.height
+}
+
+func (r rectangle) perim() float64 {
+    return 2 * r.width + 2 * r.height
+}
+
+func (c circle) area() float64 {
+    return math.Pi * c.radius * c.radius
+}
+
+func (c circle) perim() float64{
+    return 2 * math.Pi * c.radius
+}
+
+func measure(g geometry) {
+    fmt.Println(g)
+    fmt.Println(g.area)
+    fmt.Println(g.perim)
 }
 
 func main() {
-	calculateFactorials(10)
-	calculateFibonacci(10)
+    r := rectangle{width: 3, height: 4}
+    c := circle{radius: 5}
+
+    measure(r)
+    measure(c)
 }
