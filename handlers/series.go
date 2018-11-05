@@ -101,14 +101,11 @@ func SeriesHandler(context *gin.Context) {
         select {
 				case result := <-fibonacciChannel:
 					response.fibonacci.append(result)
-					if tryReply(context, response) {
-						return
-					}
 				case result := <-factorialChannel:
 					response.factorial.append(result)
-					if tryReply(context, response) {
-						return
-					}
         }
-    }
+		if tryReply(context, response) {
+			return
+		}
+	}
 }
