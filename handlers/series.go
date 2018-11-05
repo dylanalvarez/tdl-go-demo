@@ -7,8 +7,53 @@ type Result struct {
     done  bool
 }
 
+type Series struct {
+	sequence []Result
+	done bool
+}
+
 type Response struct {
-    fibonacci, factorial []int
+    fibonacci, factorial Series
+}
+
+func (s *Series) append(elem Result) () {
+	if (elem.done) {
+		s.done = true
+		return
+	}
+	s.sequence = append(s.sequence, elem)
+	return
+}
+
+func (s Series) getSeries() (seriesValues []int) {
+	for _, aResult := range s.sequence {
+		seriesValues = append(seriesValues, aResult.value)
+	}
+	return
+}
+
+func (s *Series) init() () {
+	s.done = false
+	return
+}
+
+func (response *Response) init() () {
+	response.factorial.init()
+	response.fibonacci.init()
+	return
+}
+
+func (response Response) print() (series map[string] []int) {
+	series = map[string] []int {
+		"fibonacci": response.fibonacci.getSeries(),
+		"factorial": response.factorial.getSeries(),
+	}
+	return
+}
+
+func (response Response) isDone() (replied bool) {
+	replied = response.factorial.done && response.fibonacci.done
+  return
 }
 
 func calculateFibonacci(values chan Result) {
@@ -30,47 +75,40 @@ func calculateFactorial(values chan Result) {
     values <- Result{done: true}
 }
 
-func tryReply(context *gin.Context, response Response, calculatedCount int) (replied bool) {
-    if calculatedCount < 2 {
-        return false
-    }
-    context.JSON(200, gin.H{
-        "fibonacci": response.fibonacci,
-        "factorial": response.factorial,
-    })
-    replied = true
-    return
+func tryReply(context *gin.Context, response Response) (replied bool) {
+	if !response.isDone() {
+		replied = false	
+		return
+	}
+	context.JSON(200, gin.H{
+		"fibonacci": response.fibonacci.getSeries(),
+		"factorial": response.factorial.getSeries(),
+	})
+	replied = true
+	return
 }
 
 func SeriesHandler(context *gin.Context) {
     fibonacciChannel := make(chan Result, 5) // Size of buffer: 5
     factorialChannel := make(chan Result, 5)
-    var response Response
-    calculatedCount := 0
+		var response Response
+		response.init()
 
     go calculateFibonacci(fibonacciChannel)
     go calculateFactorial(factorialChannel)
 
     for {
         select {
-        case result := <-fibonacciChannel:
-            if result.done {
-                calculatedCount++
-                if tryReply(context, response, calculatedCount) {
-                    return
-                }
-            } else {
-                response.fibonacci = append(response.fibonacci, result.value)
-            }
-        case result := <-factorialChannel:
-            if result.done {
-                calculatedCount++
-                if tryReply(context, response, calculatedCount) {
-                    return
-                }
-            } else {
-                response.factorial = append(response.factorial, result.value)
-            }
+				case result := <-fibonacciChannel:
+					response.fibonacci.append(result)
+					if tryReply(context, response) {
+						return
+					}
+				case result := <-factorialChannel:
+					response.factorial.append(result)
+					if tryReply(context, response) {
+						return
+					}
         }
     }
 }
