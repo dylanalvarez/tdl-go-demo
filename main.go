@@ -7,8 +7,56 @@ type Result struct {
     done  bool
 }
 
+type Series struct {
+	len int
+	sequence []Result
+	done bool
+}
+
 type Response struct {
-    fibonacci, factorial []int
+    fibonacci, factorial Series
+}
+
+func (s *Series) append(elem Result) () {
+	if (elem.done) {
+		s.done = true
+		return
+	}
+	s.sequence = append(s.sequence, elem)
+	s.len++
+	return
+}
+
+func (s Series) getSeries() (seriesValues []int) {
+	for _, aResult := range s.sequence {
+		seriesValues = append(seriesValues, aResult.value)
+	}
+	return
+}
+
+func (s *Series) init() () {
+	s.done = false
+	s.len = 0
+	return
+}
+
+func (response *Response) init() () {
+	response.factorial.init()
+	response.fibonacci.init()
+	return
+}
+
+func (response Response) print() (series map[string] []int) {
+	series = map[string] []int {
+		"fibonacci": response.fibonacci.getSeries(),
+		"factorial": response.factorial.getSeries(),
+	}
+	return
+}
+
+func (response Response) isDone() (replied bool) {
+	replied = response.factorial.done && response.fibonacci.done
+  return
 }
 
 func calculateFibonacci(values chan Result) {
@@ -30,49 +78,37 @@ func calculateFactorial(values chan Result) {
     values <- Result{done: true}
 }
 
-func tryReply(response Response, calculatedCount int) (replied bool) {
-    if calculatedCount < 2 {
-        return false
-    }
-		series := map[string] []int {
-			"fibonacci": response.fibonacci,
-      "factorial": response.factorial,
-		}
-		fmt.Println(series)
-		
-    replied = true
-    return
+func tryReply(response Response) (replied bool) {
+	if !response.isDone() {
+		replied = false	
+		return
+	}
+	fmt.Println(response.print())
+	replied = true
+	return
 }
 
 func main() {
     fibonacciChannel := make(chan Result, 5) // Size of buffer: 5
     factorialChannel := make(chan Result, 5)
-    var response Response
-    calculatedCount := 0
+		var response Response
+		response.init()
 
     go calculateFibonacci(fibonacciChannel)
     go calculateFactorial(factorialChannel)
 
     for {
         select {
-        case result := <-fibonacciChannel:
-            if result.done {
-                calculatedCount++
-                if tryReply(response, calculatedCount) {
-                    return
-                }
-            } else {
-                response.fibonacci = append(response.fibonacci, result.value)
-            }
-        case result := <-factorialChannel:
-            if result.done {
-                calculatedCount++
-                if tryReply(response, calculatedCount) {
-                    return
-                }
-            } else {
-                response.factorial = append(response.factorial, result.value)
-            }
+				case result := <-fibonacciChannel:
+					response.fibonacci.append(result)
+					if tryReply(response) {
+						return
+					}
+				case result := <-factorialChannel:
+					response.factorial.append(result)
+					if tryReply(response) {
+						return
+					}
         }
     }
 }
