@@ -8,7 +8,6 @@ type Result struct {
 }
 
 type Series struct {
-	len int
 	sequence []Result
 	done bool
 }
@@ -23,7 +22,6 @@ func (s *Series) append(elem Result) () {
 		return
 	}
 	s.sequence = append(s.sequence, elem)
-	s.len++
 	return
 }
 
@@ -36,7 +34,6 @@ func (s Series) getSeries() (seriesValues []int) {
 
 func (s *Series) init() () {
 	s.done = false
-	s.len = 0
 	return
 }
 
