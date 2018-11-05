@@ -98,14 +98,11 @@ func main() {
         select {
 				case result := <-fibonacciChannel:
 					response.fibonacci.append(result)
-					if tryReply(response) {
-						return
-					}
 				case result := <-factorialChannel:
 					response.factorial.append(result)
-					if tryReply(response) {
-						return
-					}
-        }
+				}
+				if tryReply(response) {
+					return
+				}
     }
 }
