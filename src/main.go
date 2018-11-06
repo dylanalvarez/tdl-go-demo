@@ -11,7 +11,6 @@ func calculateFibonacci(values chan Result) {
     for i := 0; i < 20; i++ {
         x, y = y, x+y
         values <- Result{Value: x, Done: false}
-		fmt.Println("soy Fibonacci!!!")
     }
     values <- Result{Done: true}
 }
@@ -22,7 +21,6 @@ func calculateFactorial(values chan Result) {
     for i := 1; i < 10; i++ {
         accumulator *= i
         values <- Result{Value: accumulator, Done: false}
-		fmt.Println("soy Factorial!!!")
     }
     values <- Result{Done: true}
 }
